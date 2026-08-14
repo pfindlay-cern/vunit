@@ -111,14 +111,14 @@ class ModelSimInterface(VsimSimulatorMixin, SimulatorInterface):  # pylint: disa
     def _find_ini_file(self, prefix: str, support_ini_flag: bool) -> tuple[Path, str] | None:
         """
         Find the INI file to use for the simulation and the name of the copy to be used for simulation.
-        """
 
-        # The standard simulation INI file name is based on the name of the INI flag option. If such a file
-        # doesn't exist in the installation but there is another similar INI file, the simulation name
-        # is based on that file instead. We only revert to finding any INI file if the standard names
-        # can't be found. The reason is that the non-standard approaches are a somewhat unknown territory
-        # and this way we avoid discarding a standard name if there are several INI files in the installation
-        # directory.
+        The standard simulation INI file name is based on the name of the INI flag option. If such a file
+        doesn't exist in the installation but there is another similar INI file, the simulation name
+        is based on that file instead. We only revert to finding any INI file if the standard names
+        can't be found. The reason is that the non-standard approaches are a somewhat unknown territory
+        and this way we avoid discarding a standard name if there are several INI files in the installation
+        directory.
+        """
         parent_dir = Path(prefix).parent
         installation_ini_name = "questa.ini" if support_ini_flag else "modelsim.ini"
         standard_installation_ini_file = parent_dir / installation_ini_name
@@ -146,7 +146,6 @@ class ModelSimInterface(VsimSimulatorMixin, SimulatorInterface):  # pylint: disa
         """
         Find first valid Modelsim/Questa toolchain prefix
         """
-
         def has_ini(path):
             return cls._find_any_ini_file(Path(path).parent) is not None
 
@@ -360,19 +359,13 @@ class ModelSimInterface(VsimSimulatorMixin, SimulatorInterface):  # pylint: disa
         """
         Returns 'qsim' if using questa one gui else returns 'vsim'
         """
-        vsim_command = "vsim"
-        if self._debugger == "qone" :
-            vsim_command = "qsim"
-        return vsim_command
+        return "qsim" if self._debugger == "qone" else "vsim"
 
     def _vopt_command(self):
         """
         Returns 'qopt' if using questa one gui else returns 'vopt'
         """
-        vopt_command = "vopt"
-        if self._debugger == "qone" :
-            vopt_command = "qopt"
-        return vopt_command
+        return "qopt" if self._debugger == "qone" else "vopt"
 
     @staticmethod
     def _design_to_optimize(config):
@@ -954,6 +947,14 @@ proc _vunit_sim_restart {} {
             if key in env.keys():
                 del env[key]
         return env
+
+    def clean_up(self):
+        """
+        Explicitly clean up the persistent tcl shell instance
+        """
+        SimulatorInterface.clean_up(self)
+        if self._persistent_shell is not None:
+            self._persistent_shell.teardown()
 
 
 def encode_generic_value_for_tcl(value):
