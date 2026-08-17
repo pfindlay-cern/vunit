@@ -344,6 +344,9 @@ class ModelSimInterface(VsimSimulatorMixin, SimulatorInterface):  # pylint: disa
         """
         Return True if design shall be optimized.
         """
+        if config.sim_options.get("modelsim.three_step_flow", False) and self._debugger == "qone":
+            print ("VUNIT: three step flow is broken for questa one - two step flow will be attempted instead")
+            return False
         return config.sim_options.get("modelsim.three_step_flow", False)
 
     def _early_load_in_gui_mode(self):
@@ -479,15 +482,9 @@ proc vunit_optimize {{vopt_extra_args ""}} {"""
     def _run_optimize_batch_file(self, batch_file_name, script_path):
         """
         Run a test bench in batch by invoking a new vsim process from the command line
-
-        Warning - I have no idea why the optimise step for questa one is broken.
-        There is a behavioural difference between qsim -c -do "source batch_optimise.do" and qsim -do batch_optimise.do
         """
-        args = [str(Path(self._prefix) / self._vsim_command()),]
-        if self._debugger != "qone":
-            args += ["-c",]
-
-        args += [
+        args = [str(Path(self._prefix) / self._vsim_command()),
+            "-c",
             "-l",
             str(script_path / "transcript"),
             "-do",
